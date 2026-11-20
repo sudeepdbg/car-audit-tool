@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Runtime artifacts (keep the folders via .gitkeep)
+uploads/*
+heatmaps/*
+reports/*
+database/*
+!uploads/.gitkeep
+!heatmaps/.gitkeep
+!reports/.gitkeep
+!database/.gitkeep
+
+# Secrets / local config
+.env
+*.key
+
+# Model cache
+model_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

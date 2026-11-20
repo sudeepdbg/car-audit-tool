@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Audit Tool</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <!-- ============================================================= LOGIN OVERLAY -->
+  <div id="loginScreen" class="login-screen" hidden>
+    <div class="login-card">
+      <div class="brand-mark large" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 7l2 5" />
+          <path d="M3 12h18v5H3z" />
+          <circle cx="7" cy="17" r="1.6" fill="currentColor" stroke="none" />
+          <circle cx="17" cy="17" r="1.6" fill="currentColor" stroke="none" />
+        </svg>
+      </div>
+      <h1>Car Audit Tool</h1>
+      <p class="login-sub">Sign in to continue</p>
+
+      <form id="loginForm" autocomplete="on">
+        <label class="login-field">
+          <span>Username</span>
+          <input type="text" id="loginUsername" name="username" autocomplete="username" required />
+        </label>
+        <label class="login-field">
+          <span>Password</span>
+          <div class="password-wrap">
+            <input type="password" id="loginPassword" name="password" autocomplete="current-password" required />
+            <button type="button" class="toggle-pass" id="togglePass" aria-label="Show password">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+        </label>
+        <div id="loginError" class="login-error" hidden></div>
+        <button type="submit" class="primary-btn" id="loginSubmit">
+          <span>Sign in</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      </form>
+      <p class="login-hint muted">First run? The admin password is printed once in the server console.</p>
+    </div>
+  </div>
+
+  <div class="app" id="appShell" hidden>
+    <!-- ============================================================= HEADER -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 7l2 5" />
+            <path d="M3 12h18v5H3z" />
+            <circle cx="7" cy="17" r="1.6" fill="currentColor" stroke="none" />
+            <circle cx="17" cy="17" r="1.6" fill="currentColor" stroke="none" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Car Audit Tool</h1>
+          <p>Offline image comparison &middot; ResNet50 &middot; Heatmap damage localization</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <span id="modelBadge" class="badge" data-state="loading">checking model&hellip;</span>
+        <div class="user-menu" id="userMenu" hidden>
+          <button class="user-btn" id="userBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar" id="userAvatar">A</span>
+            <span class="user-name" id="userName">admin</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="user-dropdown" id="userDropdown" role="menu" hidden>
+            <button type="button" data-menu="change-pass" role="menuitem">Change password</button>
+            <button type="button" data-menu="logout" role="menuitem" class="danger">Sign out</button>
+          </div>
+        </div>
+        <button id="themeToggle" class="icon-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============================================================= TABS -->
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="single" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h10" />
+        </svg>
+        Single Compare
+      </button>
+      <button class="tab" data-tab="batch" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+        Batch Process
+      </button>
+      <button class="tab" data-tab="history" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M12 8v4l3 2" />
+        </svg>
+        History
+      </button>
+      <button class="tab" data-tab="stats" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18" />
+          <rect x="5" y="11" width="3" height="8" />
+          <rect x="10.5" y="7" width="3" height="12" />
+          <rect x="16" y="14" width="3" height="5" />
+        </svg>
+        Statistics
+      </button>
+    </nav>
+
+    <main class="content">
+      <!-- ====================================================== SINGLE TAB -->
+      <section id="singleTab" class="panel active" role="tabpanel">
+        <div class="upload-grid">
+          <div class="drop-zone" id="goldenZone" data-side="golden">
+            <div class="drop-zone-head">
+              <h3>Golden Image</h3>
+              <span class="muted">ideal condition</span>
+            </div>
+            <div class="drop-target" tabindex="0" role="button" aria-label="Upload golden image">
+              <div class="drop-empty">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="M7 10l5-5 5 5M12 5v12" />
+                </svg>
+                <p>Drop image or video here or click to browse</p>
+                <span class="hint">PNG &middot; JPG &middot; WEBP &middot; MP4 &middot; MOV &middot; max 50 MB</span>
+              </div>
+              <img class="drop-preview" alt="" />
+              <input type="file" class="drop-input" accept="image/*,video/*" hidden />
+            </div>
+            <button class="link-btn camera-trigger" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              Capture from camera
+            </button>
+            <input type="file" class="camera-input" accept="image/*" capture="environment" hidden />
+          </div>
+
+          <div class="drop-zone" id="returnedZone" data-side="returned">
+            <div class="drop-zone-head">
+              <h3>Returned Image</h3>
+              <span class="muted">after rental</span>
+            </div>
+            <div class="drop-target" tabindex="0" role="button" aria-label="Upload returned image">
+              <div class="drop-empty">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="M7 10l5-5 5 5M12 5v12" />
+                </svg>
+                <p>Drop image or video here or click to browse</p>
+                <span class="hint">PNG &middot; JPG &middot; WEBP &middot; MP4 &middot; MOV &middot; max 50 MB</span>
+              </div>
+              <img class="drop-preview" alt="" />
+              <input type="file" class="drop-input" accept="image/*,video/*" hidden />
+            </div>
+            <button class="link-btn camera-trigger" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              Capture from camera
+            </button>
+            <input type="file" class="camera-input" accept="image/*" capture="environment" hidden />
+          </div>
+        </div>
+
+        <details class="metadata-collapsible">
+          <summary>Audit details <span class="muted">(optional)</span></summary>
+          <div class="form-grid">
+            <label>Vehicle ID
+              <input type="text" id="vehicleId" placeholder="e.g. MH-12-AB-1234" />
+            </label>
+            <label>Customer name
+              <input type="text" id="customerName" placeholder="e.g. Jane Doe" />
+            </label>
+            <label>Rental start date
+              <input type="date" id="rentalStartDate" />
+            </label>
+            <label>Rental end date
+              <input type="date" id="rentalEndDate" />
+            </label>
+          </div>
+        </details>
+
+        <button id="compareBtn" class="primary-btn" type="button" disabled>
+          <span>Compare Images</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+
+        <div id="loadingIndicator" class="loading" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Analyzing images and generating heatmap&hellip;</p>
+        </div>
+
+        <div id="resultsSection" class="results" hidden>
+          <div class="results-head">
+            <h2>Audit Results</h2>
+            <div class="results-actions">
+              <button class="ghost-btn" id="exportPdfBtn" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3" />
+                </svg>
+                Export PDF
+              </button>
+              <button class="ghost-btn" id="newCompareBtn" type="button">New compare</button>
+            </div>
+          </div>
+
+          <div class="score-card">
+            <div class="score-circle" id="scoreCircle">
+              <span id="trustScoreValue">0.00</span>
+              <small>trust score</small>
+            </div>
+            <div class="score-meta">
+              <span id="conditionPill" class="pill">Condition</span>
+              <p id="recommendationText" class="muted">Recommendation</p>
+              <ul id="warningsList" class="warnings" hidden></ul>
+              <p class="muted small">
+                Severity <strong id="severityText">-</strong> &middot;
+                Audit <strong id="auditIdText">-</strong> &middot;
+                <span id="processingTimeText">-</span>
+              </p>
+              <p id="inputsText" class="muted small" hidden></p>
+            </div>
+          </div>
+
+          <div class="heatmap-block">
+            <div class="heatmap-head">
+              <h3>Damage localization</h3>
+              <div class="heatmap-toggle">
+                <button class="seg active" data-heatmap-view="overlay">Overlay</button>
+                <button class="seg" data-heatmap-view="composite">Side-by-side</button>
+                <button class="seg" data-heatmap-view="difference">Difference</button>
+              </div>
+            </div>
+            <div class="heatmap-frame">
+              <img id="heatmapImage" src="" alt="Heatmap" />
+            </div>
+            <p class="heatmap-note muted">Red zones highlight regions where the returned image differs most from the golden reference.</p>
+          </div>
+
+          <div class="details-grid">
+            <div class="detail-card">
+              <h4>Semantic analysis</h4>
+              <div id="semanticDetails" class="metric-list"></div>
+            </div>
+            <div class="detail-card">
+              <h4>Pixel-level metrics</h4>
+              <div id="pixelDetails" class="metric-list"></div>
+            </div>
+            <div class="detail-card full-width">
+              <h4>Technical metadata</h4>
+              <div id="metadataDetails" class="metric-list"></div>
+            </div>
+          </div>
+
+          <details class="json-output">
+            <summary>Full JSON response</summary>
+            <div class="json-actions">
+              <button class="ghost-btn small" id="copyJsonBtn" type="button">Copy</button>
+            </div>
+            <pre id="jsonOutput"></pre>
+          </details>
+        </div>
+      </section>
+
+      <!-- ====================================================== BATCH TAB -->
+      <section id="batchTab" class="panel" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Batch processing</h2>
+          <p class="muted">Upload multiple image pairs at once. Each pair runs through the same comparison pipeline and is saved to the audit history.</p>
+        </div>
+        <div id="batchPairsContainer" class="batch-list"></div>
+        <button class="ghost-btn add-pair-btn" id="addPairBtn" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add another pair
+        </button>
+        <button id="batchRunBtn" class="primary-btn" type="button" disabled>Process all pairs</button>
+
+        <div id="batchLoading" class="loading" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Processing batch&hellip; <span id="batchProgress"></span></p>
+        </div>
+
+        <div id="batchResults" class="results" hidden>
+          <div class="results-head">
+            <h2>Batch summary</h2>
+          </div>
+          <div id="batchSummary" class="summary-grid"></div>
+          <h3 class="batch-detail-title">Per-pair results</h3>
+          <div id="batchDetails" class="batch-detail-list"></div>
+        </div>
+      </section>
+
+      <!-- ====================================================== HISTORY TAB -->
+      <section id="historyTab" class="panel" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Audit history</h2>
+          <div class="history-controls">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <input type="text" id="searchAudit" placeholder="Search by audit id or vehicle id" />
+            </div>
+            <button class="ghost-btn" id="refreshAuditsBtn" type="button">Refresh</button>
+          </div>
+        </div>
+        <div id="auditsList" class="audit-list">
+          <div class="empty-state">
+            <p>Click <strong>Refresh</strong> to load audit history.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================== STATS TAB -->
+      <section id="statsTab" class="panel" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Statistics</h2>
+          <button class="ghost-btn" id="loadStatsBtn" type="button">Load statistics</button>
+        </div>
+        <div id="statisticsContent" class="stats-grid">
+          <div class="empty-state">
+            <p>Click <strong>Load statistics</strong> to see the dashboard.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>Car Audit Tool v2.4</span>
+      <span class="muted">|</span>
+      <span id="footerModelInfo">ResNet50 hybrid engine</span>
+    </footer>
+  </div>
+
+  <!-- ============================================================= CHANGE PASSWORD MODAL -->
+  <div id="passModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3>Change password</h3>
+        <button class="icon-btn" data-close type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label class="login-field">
+          <span>Current password</span>
+          <input type="password" id="passCurrent" autocomplete="current-password" />
+        </label>
+        <label class="login-field">
+          <span>New password (min 8 chars)</span>
+          <input type="password" id="passNew" autocomplete="new-password" />
+        </label>
+        <label class="login-field">
+          <span>Confirm new password</span>
+          <input type="password" id="passConfirm" autocomplete="new-password" />
+        </label>
+        <div id="passError" class="login-error" hidden></div>
+      </div>
+      <div class="modal-foot">
+        <button class="ghost-btn" data-close type="button">Cancel</button>
+        <button class="primary-btn compact" id="passSubmit" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= AUDIT MODAL -->
+  <div id="auditModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3 id="modalTitle">Audit details</h3>
+        <button class="icon-btn" data-close type="button" aria-label="Close">&times;</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-foot">
+        <button class="ghost-btn" id="modalExportBtn" type="button">Export PDF</button>
+        <button class="ghost-btn" data-close type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= TOASTS -->
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

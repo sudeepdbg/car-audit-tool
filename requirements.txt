@@ -1,0 +1,33 @@
+# Car Audit Tool - Python dependencies
+# Python 3.10 - 3.12
+
+# Web framework
+flask>=3.0.3,<4
+werkzeug>=3.0.3,<4
+
+# Production WSGI server. waitress is cross-platform (works on Windows too)
+# and is single-threaded-by-default with a thread pool, so the in-memory
+# login rate limiter keeps working. Use one worker process to keep the
+# limiter consistent across requests. To run: `WSGI=waitress python app.py`
+# or `waitress-serve --listen=127.0.0.1:5000 app:app`.
+waitress>=3.0,<4
+
+# Deep learning. This installs the default build; for a smaller CPU-only
+# install use: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.3,<3
+torchvision>=0.18,<1
+
+# Image + video processing. opencv-python-headless reads video via its
+# FFMPEG backend so a representative frame can be extracted from short
+# clips; needs no system GUI libs.
+pillow>=10.4,<12
+numpy>=1.26,<3
+scikit-image>=0.24,<1
+opencv-python-headless>=4.10,<5
+
+# PDF report export
+reportlab>=4.2,<5
+
+# Auth
+pyjwt>=2.9,<3
+bcrypt>=4.2,<5
